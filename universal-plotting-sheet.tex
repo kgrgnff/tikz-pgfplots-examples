@@ -1,0 +1,335 @@
+% Universal Plotting Sheet
+% Author: Kolja Gerganoff
+
+%\documentclass{minimal}
+%\documentclass[margin=0pt]{standalone}
+\documentclass[11pt]{article}
+\usepackage{nopageno} %\thispagestyle{empty}
+
+\usepackage{helvet}
+\usepackage{mathptmx}
+
+\usepackage[dvipsnames]{xcolor}
+
+\usepackage{geometry}
+\geometry{
+	a4paper,
+	landscape,
+	total={257mm,170mm},
+	left=27mm,
+	top=21mm,
+}
+\usepackage{tikz} 
+\usetikzlibrary{fpu,math}
+\usepackage{siunitx}
+\usepackage{verbatim}
+\usepackage{ifthen}
+
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.17}
+\pgfplotsset{every axis/.append style={
+	%axis x line=none,
+	axis line style={-,color=OliveGreen},
+	tick label style={font=\footnotesize} %\small \scriptsize \footnotesize \tiny \si{\degree}
+}}
+
+\newcommand\degfs{\fontsize{9pt}{11pt}\selectfont}
+
+\begin{comment}
+:Title: Universal Plotting Sheet
+:Tags: Marine Sheets
+:Author: Kolja Gerganoff
+\end{comment}
+
+\begin{document}
+
+%------------------------------------
+% Enter latitude and longitude of your position
+%------------------------------------
+\def\latitude{54.32325} 	% latitude in decimal format
+\def\latns{N} % N or S
+%\def\latns{S} 
+\def\longitude{10.13224}	% longitude in decimal format
+\def\longew{E} % E or W
+%\def\longew{W}
+
+% 1 -> draw lines of latitude, latitude must be given above
+% 0 -> don't draw lines of latitude
+\def\drawlatitude{1} 
+%\def\drawlatitude{0} 
+
+% Constants for the circle and lines of longitude
+\def\maxradius{8.01cm}
+\def\maxleft{12.0cm}
+\def\maxright{12.0cm}
+\def\radius{6.0cm}
+\def\twentymindist{2.0cm}
+\def\onedeglen{0.2cm}
+\def\fivedeglen{0.28cm}
+\def\tendeglen{0.32cm}
+\def\labeldist{0.5cm}
+\def\outerlabeldist{0.80cm}
+\def\labelydist{0.6cm}
+\def\axismargin{0.7cm}
+\def\innerlinemargin{0.88cm}
+\def\outerlinemargin{0.05cm}
+\def\onedegrad{\radius - \onedeglen}
+\def\fivedegrad{\radius - \fivedeglen}
+\def\tendegrad{\radius - \tendeglen}
+\def\labelrad{\radius - \labeldist}
+% Constants for the reference field of the latitude length
+\def\d{\radius / 30.0}
+\def\xaxisoffset{\radius - 1cm}
+\def\yaxisoffset{-\radius + 0.6cm}
+\def\yscale{15.2}
+\def\xaxisoffsetb {\xaxisoffset}
+\def\yaxisoffsetb {\yaxisoffset}
+\def\dy{1.0/\yscale}
+\tikzmath{
+	\sinlat = \radius * sin(\latitude)/1cm;
+	\coslat = \radius * cos(\latitude)/1cm;
+}
+
+\begin{centering}
+	\begin{tikzpicture}[scale=1.0]
+		\begin{scope}
+
+			%------------------------------------
+			% Helper lines
+			%------------------------------------
+			\node[draw, very thin, white, circle, inner sep=3mm] (a) at (0,0) {};
+			\foreach \x in {45, 135, ..., 360} \draw[very thin, gray!40] (a) -- (\x:\radius);
+			% draw lines of longitude
+			\ifnum \drawlatitude=1
+				\foreach \x in {-2,-1,...,2}{
+						\ifnum \x=0 \else
+							\draw [thin, gray!40] (\x * \coslat, -\maxradius) -- (\x * \coslat, \maxradius);
+						\fi
+						\node at (\x * \coslat, \maxradius+\labeldist)
+						{%
+							\color{OliveGreen} \degfs
+							\pgfmathparse{\x + \longitude - 0.5}
+							\pgfmathprintnumber[
+								fixed,
+								precision=0
+							]{\pgfmathresult}\si{\degree}\longew%
+						};
+					}
+			\fi
+			% draw lines of latitude
+			\foreach \x in {-1,0,1}{
+					\ifnum \x=0 \else
+						\draw [thin, gray!40] (-\maxleft, \x * \radius) -- (\maxright, \x * \radius);
+					\fi
+					\ifnum \drawlatitude=1
+						\node at (\maxright+\labeldist, \x * \radius)
+						{%
+							\color{OliveGreen} \degfs
+							\pgfmathparse{\x + \latitude - 0.5}
+							\pgfmathprintnumber[
+								fixed,
+								precision=0
+							]{\pgfmathresult}\si{\degree}\latns%
+						};
+					\fi
+				}
+
+			%------------------------------------
+			% Circle with ticks
+			%------------------------------------
+			\draw[thick, color=OliveGreen] (0,0) circle (\radius);
+
+			% ticks every 1 degree if not mod10,mod5 
+			\foreach \i
+			[evaluate=\i as \x using {ifthenelse( int(mod(\i,5))==0 || int(mod(\i,10))==0, 0,1)}] in {0,...,359} {%
+				\ifnum \x=1
+					\draw[color=OliveGreen] (\i:\onedegrad) -- (\i:\radius);
+				\fi
+			}
+			% ticks every 5 degrees
+			\foreach \i
+			[evaluate=\i as \x using {int(mod(\i,10))}] in {0,5,...,355} {%
+				\ifnum \x=0 \else
+					\draw[color=OliveGreen] (\i:\fivedegrad) -- (\i:\radius);
+				\fi
+			}
+			% labels and longer ticks at every 10 degrees
+			\foreach \x in {0,10,...,350} {%
+				\ifthenelse{\x>90 \AND \x<270}
+				{\node[scale=1.0, rotate=180-\x] at (360-\x+90:\labelrad){\color{OliveGreen} \degfs \x};}
+				{\node[scale=1.0, rotate=\x*-1] at (360-\x+90:\labelrad) {\color{OliveGreen} \degfs \x};}
+				\draw[thick, color=OliveGreen] (\x:\tendegrad) -- (\x:\radius);
+			}
+			% labels for latitude
+			\foreach \x in {10,20,...,70} {%
+				{\node[scale=1.0, rotate=-\x] at (360-\x:\labelrad+\outerlabeldist){\color{OliveGreen} \degfs \x\si{\degree}};}
+				{\node[scale=1.0, rotate=\x] at (360+\x:\labelrad+\outerlabeldist){\color{OliveGreen} \degfs \x\si{\degree}};}
+			}
+
+			%------------------------------------
+			% Vertical axis
+			%------------------------------------
+			\draw[thick, color=OliveGreen] (0,-\radius + \axismargin) -- (0,\radius - \axismargin);
+			\draw[thick, color=OliveGreen] (0,\radius + \outerlinemargin) -- (0,\maxradius);
+			\draw[thick, color=OliveGreen] (0,-\radius - \outerlinemargin) -- (0,-\maxradius);
+
+			%------------------------------------
+			% Horizontal axis and grid
+			%------------------------------------
+			% "zero" longitude line
+			\draw[thick, color=OliveGreen] (-\radius - \outerlinemargin,0) -- (-\maxleft,0);
+			\draw[thick, color=OliveGreen] (\radius + \outerlinemargin,0) -- (\maxright,0);
+			\draw[thick, color=OliveGreen] (-\radius + \innerlinemargin,0) -- (\radius -  \innerlinemargin,0);
+
+			% lines at 0deg+20' and -1deg40' (-20' from center line) 
+			\draw[thin, gray!40] (-\outerlinemargin,\radius +  \twentymindist) -- (-\maxleft, \radius +  \twentymindist);
+			\draw[thin, gray!40] (\innerlinemargin, \radius +  \twentymindist) -- (\maxright, \radius +  \twentymindist);
+			\draw[thin, gray!40] (-\outerlinemargin, -\radius - \twentymindist) -- (-\maxleft, -\radius -  \twentymindist );
+			\draw[thin, gray!40] (\innerlinemargin, -\radius - \twentymindist) -- (\maxright, -\radius - \twentymindist);
+
+			% ticks every 1 degree if not mod10,mod5 within the circle
+			\foreach \i
+			[evaluate=\i as \x using {ifthenelse( int(mod(\i,5))==0 || int(mod(\i,10))==0, 0,1)}] in {-52,-51,...,52} {%
+					\ifnum \x=1
+						\draw[color=OliveGreen] (0,\i cm / 10) -- (\onedeglen,\i cm / 10);
+					\fi
+			}
+			%  ticks every 1 degrees above the circle
+			\foreach \i
+			[evaluate=\i as \x using {ifthenelse( int(mod(\i,5))==0 || int(mod(\i,10))==0, 0,1)}] in {1,...,19} {%
+					\ifnum \x=1
+						\draw[color=OliveGreen] (0,\radius + \i cm / 10) -- (\onedeglen,\radius + \i cm / 10);
+					\fi
+			}
+			%  ticks every 1 degrees below the circle
+			\foreach \i
+			[evaluate=\i as \x using {ifthenelse( int(mod(\i,5))==0 || int(mod(\i,10))==0, 0,1)}] in {1,...,19} {%
+					\ifnum \x=1
+						\draw[color=OliveGreen] (0,-\radius - \i cm / 10) -- (\onedeglen,-\radius - \i cm / 10);
+					\fi
+			}
+
+			% ticks every 5 degrees within the circle
+			\foreach \i
+			[evaluate=\i as \x using {ifthenelse( int(mod(\i,5))==0 && int(mod(\i,10))!=0, 0,1)}] in {-52,-51,...,52} {%
+					\ifnum \x=0
+						\draw[color=OliveGreen] (0,\i cm / 10) -- (\fivedeglen,\i cm / 10);
+					\fi
+			}
+			% ticks every 5 degrees above the circle
+			\foreach \i
+			[evaluate=\i as \x using {ifthenelse( int(mod(\i,5))==0 && int(mod(\i,10))!=0, 0,1)}] in {1,...,19} {%
+					\ifnum \x=0
+						\draw[color=OliveGreen] (0,\radius + \i cm / 10) -- (\fivedeglen,\radius + \i cm / 10);
+					\fi
+			}
+			% ticks every 5 degrees below the circle
+			\foreach \i
+			[evaluate=\i as \x using {ifthenelse( int(mod(\i,5))==0 && int(mod(\i,10))!=0, 0,1)}] in {1,...,19} {%
+					\ifnum \x=0
+						\draw[color=OliveGreen] (0,-\radius - \i cm / 10) -- (\fivedeglen,-\radius - \i cm / 10);
+					\fi
+			}
+
+			% ticks and labels every 10 degrees within the circle
+			\foreach \i
+			[evaluate=\i as \x using {ifthenelse(int(mod(\i,10))==0, 0,1)}] in {1,...,59} {%
+			\ifnum \x=0
+				\draw[thick, color=OliveGreen] (0,\i cm / 10) -- (\tendeglen,\i cm / 10);
+				{\node[scale=1.0] at (\labelydist, \i cm / 10){\color{OliveGreen} \degfs \i´};}
+				\draw[thick, color=OliveGreen] (0,-\radius + \i cm / 10) -- (\tendeglen,-\radius + \i cm / 10);
+				{\node[scale=1.0] at (\labelydist,-\radius + \i cm / 10){\color{OliveGreen} \degfs \i´};}
+			\fi
+			}
+			%  ticks and labels every 10 degrees above the circle
+			\foreach \i
+			[evaluate=\i as \x using {ifthenelse(int(mod(\i,10))==0, 0,1)}] in {1,...,20} {%
+			\ifnum \x=0
+				\draw[thick, color=OliveGreen] (0,\radius + \i cm / 10) -- (\tendeglen,\radius + \i cm / 10);
+				{\node[scale=1.0] at (\labelydist, \radius + \i cm / 10){\color{OliveGreen} \degfs \i´};}
+			\fi
+			}
+			% ticks and labels every 10 degrees below the circle
+			\foreach \i
+			[evaluate=\i as \x using {ifthenelse(int(mod(\i,10))==0, 0,1)}] in {59,...,40} {%
+			\ifnum \x=0
+				\draw[thick, color=OliveGreen] (0,-2*\radius + \i cm / 10) -- (\tendeglen,-2*\radius + \i cm / 10);
+				{\node[scale=1.0] at (\labelydist,-2*\radius + \i cm / 10){\color{OliveGreen} \degfs \i´};}
+			\fi
+			}
+		\end{scope}
+
+		%------------------------------------
+		% Reference field for determining the length of a longitudal degree
+		%------------------------------------
+		\begin{scope}[xshift=\xaxisoffset,yshift=\yaxisoffset]
+			\begin{axis}[
+					ymin=-0.08,ymax=70.08,
+					xmin=-0.05,xmax=60.06,
+					y = 0.8 * \radius / 70,
+					x = \radius / 60,
+					xtick = {0,10,...,60}, %\empty,´
+					xticklabels = {60´,50´,40´,30´,20´,10´,0},% {0,10´,20´,30´,40´,50´,60´},
+					ytick = {0,10,...,70},
+					yticklabels = {0\si{\degree}, 10\si{\degree},20\si{\degree},30\si{\degree},40\si{\degree},50\si{\degree},60\si{\degree},70\si{\degree}},
+					minor y tick num=9,
+					minor x tick num=0,
+					yticklabel pos=right,
+					ytick pos=right,
+					major tick length=0.15cm,
+					minor tick length=0.05cm,
+					axis y line = left,
+					axis x line = bottom,
+					axis y line=right,
+					axis line style =  {-},
+					axis y line shift=\radius/18.1,
+					scale=1.0,
+					color=OliveGreen,
+					y tick label style={xshift=-.2em},
+					x tick label style={yshift=.1em},
+					tick style={color=OliveGreen},
+					x tick style={color=white},
+					y tick style={color=OliveGreen},
+					thin
+				]
+				% vertical 6/6 degree, 5/6, ...  lines of longitude
+				\foreach \i in {0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0}{
+						\addplot[domain=0.0:70.0,samples=100,variable=\u](%
+						{(\radius - ((\radius - \i cm) * cos(\u)))/1cm*10 },%
+						{\u }%
+						);
+				}
+
+				% 10 seconds of longitude lines
+				\foreach \i in {\d, 2*\d, 3*\d, 4*\d}{
+						\addplot[domain=0.0:70.0,samples=100,variable=\u](%
+						{(\radius - ((\radius - 5.0 cm - \i) * cos(\u)))/1cm*10},%
+						{(\u}%
+						);
+				}
+
+				% horizontal lines
+				\ifnum \drawlatitude=1
+					\addplot[color=red,domain=(\radius + 0.1pt - \radius* cos(\latitude))/1cm*10: \radius/1cm*10,samples=100,variable=\u](%
+					{\u},%
+					{\latitude}%
+					);
+				\fi
+				\addplot[line cap=rect,domain=(\radius + 0.1pt - \radius* cos(70.0))/1cm*10: \radius/1cm*10,samples=100,variable=\u](%
+				{\u},%
+				{70.0}%
+				);
+				\foreach \i in {60.0, 50.0, 40.0, 30.0, 20.0, 10.0}{%
+						\addplot[domain=(\radius - \radius * cos(\i))/1cm*10: \radius/1cm*10,samples=100,variable=\u](%
+						{\u},%
+						{\i}%
+						);
+				}
+			\end{axis}
+		\end{scope}
+	\end{tikzpicture}
+\end{centering}
+
+\end{document}
+
+
