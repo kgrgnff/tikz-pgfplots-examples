@@ -1,8 +1,6 @@
-![Example image](README-ups.png)
-
 Various examples demonstrating the use of TikZ/PGF and PGFPLOTS.
-
-#### Marine Sheets
+## Marine Sheets
 - Universal Plotting Sheet
+![Example image](README-ups.png)
 - Maneuvering Board Sheet
-...
+...etc.
